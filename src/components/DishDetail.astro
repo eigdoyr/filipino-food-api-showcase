@@ -1,0 +1,296 @@
+<!-- Backdrop (mobile + desktop) -->
+<div
+	id="dish-backdrop"
+	class="fixed inset-0 z-40 hidden bg-neutral-900/50 backdrop-blur-sm"
+	aria-hidden="true"
+></div>
+
+<!-- Panel: full-screen modal on mobile, slide-in panel on desktop -->
+<aside
+	id="dish-panel"
+	class="fixed inset-0 z-50 hidden overflow-y-auto bg-white sm:inset-x-0 sm:inset-y-8 sm:mx-auto sm:h-fit sm:max-h-[calc(100vh-4rem)] sm:max-w-2xl sm:rounded-xl sm:border sm:border-neutral-200 sm:shadow-2xl dark:bg-neutral-950 sm:dark:border-neutral-800"
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby="dish-panel-title"
+	tabindex="-1"
+>
+	<!-- Header with close + copy buttons -->
+	<div class="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white/90 px-4 py-3 backdrop-blur sm:px-6 dark:border-neutral-800 dark:bg-neutral-950/90">
+		<button
+			id="dish-close"
+			type="button"
+			class="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+			aria-label="Close detail panel"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M18 6 6 18M6 6l12 12" />
+			</svg>
+			<span>Close</span>
+		</button>
+		<button
+			id="dish-copy"
+			type="button"
+			class="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 px-2.5 py-1.5 text-sm text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-900"
+		>
+			<svg data-icon="copy" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+				<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+			</svg>
+			<svg data-icon="check" xmlns="http://www.w3.org/2000/svg" class="hidden h-4 w-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="m5 12 5 5L20 7" />
+			</svg>
+			<span data-label="default">Copy as JSON</span>
+			<span data-label="copied" class="hidden">Copied!</span>
+		</button>
+	</div>
+
+	<!-- Hero image -->
+	<div class="aspect-[16/10] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+		<img id="dish-image" src="" alt="" class="h-full w-full object-cover" />
+	</div>
+
+	<!-- Body -->
+	<div class="px-4 py-5 sm:px-6">
+		<h2 id="dish-panel-title" class="text-2xl font-bold text-neutral-900 dark:text-neutral-100"></h2>
+		<p id="dish-id" class="mt-0.5 font-mono text-xs text-neutral-500 dark:text-neutral-500"></p>
+		<p id="dish-description" class="mt-3 text-neutral-700 dark:text-neutral-300"></p>
+
+		<!-- Meta sections -->
+		<div class="mt-6 space-y-5" id="dish-meta"></div>
+
+		<!-- Image credit -->
+		<p id="dish-credit" class="mt-8 border-t border-neutral-200 pt-4 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-500"></p>
+	</div>
+</aside>
+
+<!-- Embedded dish data for the detail script (populated by index.astro via <slot/>) -->
+<slot />
+
+<script>
+	interface Dish {
+		id: string;
+		name: string;
+		description: string;
+		type: string[];
+		main_ingredients: string[];
+		occasion: string[];
+		flavor_profile: string[];
+		cooking_method: string[];
+		origin_region?: string;
+		image_url: string;
+		image_credit: string;
+		tags: string[];
+	}
+
+	const panel = document.getElementById('dish-panel');
+	const backdrop = document.getElementById('dish-backdrop');
+	const closeBtn = document.getElementById('dish-close');
+	const copyBtn = document.getElementById('dish-copy') as HTMLButtonElement | null;
+	const dataEl = document.getElementById('dish-data');
+	const titleEl = document.getElementById('dish-panel-title');
+	const idEl = document.getElementById('dish-id');
+	const descEl = document.getElementById('dish-description');
+	const imgEl = document.getElementById('dish-image') as HTMLImageElement | null;
+	const metaEl = document.getElementById('dish-meta');
+	const creditEl = document.getElementById('dish-credit');
+	const cards = document.querySelectorAll<HTMLElement>('[data-dish-card]');
+
+	if (panel && dataEl) {
+		const dishes: Dish[] = JSON.parse(dataEl.textContent ?? '[]');
+		const byId = new Map(dishes.map((d) => [d.id, d]));
+		let currentDish: Dish | null = null;
+		let lastFocused: HTMLElement | null = null;
+
+		const formatLabel = (v: string) =>
+			v.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+		const renderChips = (values: string[]) =>
+			values
+				.map(
+					(v) =>
+						`<span class="rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">${formatLabel(v)}</span>`,
+				)
+				.join('');
+
+		const renderSection = (label: string, values: string[]) => {
+			if (!values.length) return '';
+			return `
+				<section>
+					<h3 class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">${label}</h3>
+					<div class="mt-2 flex flex-wrap gap-1.5">${renderChips(values)}</div>
+				</section>
+			`;
+		};
+
+		const render = (dish: Dish) => {
+			currentDish = dish;
+			if (titleEl) titleEl.textContent = dish.name;
+			if (idEl) idEl.textContent = dish.id;
+			if (descEl) descEl.textContent = dish.description;
+			if (imgEl) {
+				imgEl.src = dish.image_url;
+				imgEl.alt = dish.name;
+			}
+			if (creditEl) creditEl.textContent = dish.image_credit;
+			if (metaEl) {
+				metaEl.innerHTML = [
+					renderSection('Type', dish.type),
+					renderSection('Main ingredients', dish.main_ingredients),
+					renderSection('Cooking method', dish.cooking_method),
+					renderSection('Flavor profile', dish.flavor_profile),
+					renderSection('Occasion', dish.occasion),
+					renderSection('Region', dish.origin_region ? [dish.origin_region] : []),
+					renderSection('Tags', dish.tags),
+				].join('');
+			}
+		};
+
+		const open = (dish: Dish, options: { updateUrl?: boolean } = { updateUrl: true }) => {
+			lastFocused = document.activeElement as HTMLElement | null;
+			render(dish);
+			panel.classList.remove('hidden');
+			backdrop?.classList.remove('hidden');
+			document.body.classList.add('overflow-hidden');
+			requestAnimationFrame(() => closeBtn?.focus());
+
+			if (options.updateUrl) {
+				const url = new URL(window.location.href);
+				url.searchParams.set('dish', dish.id);
+				history.pushState({ dish: dish.id }, '', url);
+			}
+		};
+
+		const close = (options: { updateUrl?: boolean } = { updateUrl: true }) => {
+			panel.classList.add('hidden');
+			backdrop?.classList.add('hidden');
+			document.body.classList.remove('overflow-hidden');
+			currentDish = null;
+			lastFocused?.focus();
+
+			if (options.updateUrl) {
+				const url = new URL(window.location.href);
+				url.searchParams.delete('dish');
+				history.pushState({}, '', url);
+			}
+		};
+
+		// Card clicks → open panel
+		cards.forEach((card) => {
+			card.style.cursor = 'pointer';
+			card.setAttribute('role', 'button');
+			card.setAttribute('tabindex', '0');
+
+			const handler = () => {
+				const id = card.dataset.dishId;
+				if (!id) return;
+				const dish = byId.get(id);
+				if (dish) open(dish);
+			};
+
+			card.addEventListener('click', handler);
+			card.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					handler();
+				}
+			});
+		});
+
+		closeBtn?.addEventListener('click', () => close());
+		backdrop?.addEventListener('click', () => close());
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape' && !panel.classList.contains('hidden')) close();
+		});
+
+		// Copy as JSON
+		copyBtn?.addEventListener('click', async () => {
+			if (!currentDish) return;
+			try {
+				await navigator.clipboard.writeText(JSON.stringify(currentDish, null, 2));
+				const copyIcon = copyBtn.querySelector<SVGElement>('[data-icon="copy"]');
+				const checkIcon = copyBtn.querySelector<SVGElement>('[data-icon="check"]');
+				const defaultLabel = copyBtn.querySelector<HTMLElement>('[data-label="default"]');
+				const copiedLabel = copyBtn.querySelector<HTMLElement>('[data-label="copied"]');
+
+				copyIcon?.classList.add('hidden');
+				checkIcon?.classList.remove('hidden');
+				defaultLabel?.classList.add('hidden');
+				copiedLabel?.classList.remove('hidden');
+
+				setTimeout(() => {
+					copyIcon?.classList.remove('hidden');
+					checkIcon?.classList.add('hidden');
+					defaultLabel?.classList.remove('hidden');
+					copiedLabel?.classList.add('hidden');
+				}, 1500);
+			} catch (err) {
+				console.error('Copy failed:', err);
+			}
+		});
+
+		// Sync panel with URL on back/forward navigation
+		window.addEventListener('popstate', () => {
+			const id = new URL(window.location.href).searchParams.get('dish');
+			if (id) {
+				const dish = byId.get(id);
+				if (dish) {
+					open(dish, { updateUrl: false });
+					return;
+				}
+			}
+			close({ updateUrl: false });
+		});
+
+		// Open panel on initial load if URL has ?dish=...
+		const initialId = new URL(window.location.href).searchParams.get('dish');
+		if (initialId) {
+			const dish = byId.get(initialId);
+			if (dish) open(dish, { updateUrl: false });
+		}
+	}
+</script>
+
+<style>
+	#dish-backdrop,
+	#dish-panel {
+		transition: opacity 300ms ease, transform 300ms ease, display 300ms allow-discrete;
+	}
+
+	#dish-backdrop:not(.hidden),
+	#dish-panel:not(.hidden) {
+		opacity: 1;
+	}
+
+	#dish-backdrop.hidden,
+	#dish-panel.hidden {
+		opacity: 0;
+		display: block; /* override Tailwind's hidden so transition runs */
+		pointer-events: none;
+	}
+
+	#dish-panel {
+		transform: translateY(0) scale(1);
+	}
+
+	#dish-panel.hidden {
+		transform: translateY(8px) scale(0.98);
+	}
+
+	@starting-style {
+		#dish-backdrop:not(.hidden),
+		#dish-panel:not(.hidden) {
+			opacity: 0;
+		}
+		#dish-panel:not(.hidden) {
+			transform: translateY(8px) scale(0.98);
+		}
+	}
+
+	/* After the transition completes on close, fully hide so it can't be tabbed to */
+	#dish-panel.hidden,
+	#dish-backdrop.hidden {
+		visibility: hidden;
+		transition: opacity 200ms ease, transform 200ms ease, visibility 0s 200ms;
+	}
+</style>

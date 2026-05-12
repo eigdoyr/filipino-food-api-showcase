@@ -9,6 +9,7 @@ const { dish } = Astro.props;
 ---
 <article
 	data-dish-card
+    data-dish-id={dish.id}
 	data-search={[
 		dish.name,
 		dish.description,

@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import SearchBar from '../components/SearchBar.astro';
 import FilterSidebar from '../components/FilterSidebar.astro';
 import DishCard from '../components/DishCard.astro';
+import DishDetail from '../components/DishDetail.astro';
 import { fetchAllDishes, extractFilterOptions } from '../lib/api';
 
 const dishes = await fetchAllDishes();
@@ -58,4 +59,11 @@ const filterOptions = extractFilterOptions(dishes);
 			</div>
 		</div>
 	</div>
+	<DishDetail>
+	<script
+		id="dish-data"
+		type="application/json"
+		set:html={JSON.stringify(dishes)}
+	/>
+</DishDetail>
 </Layout>
