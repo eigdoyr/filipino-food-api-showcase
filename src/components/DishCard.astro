@@ -21,6 +21,10 @@ const { dish } = Astro.props;
 		...dish.tags,
 		dish.origin_region ?? '',
 	].join(' ')}
+	data-group-type={dish.type.join('|')}
+	data-group-occasion={dish.occasion.join('|')}
+	data-group-region={dish.origin_region ?? ''}
+	data-group-flavor_profile={dish.flavor_profile.join('|')}
 	class="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
 >
 	<div class="aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800">

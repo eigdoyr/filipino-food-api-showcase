@@ -27,3 +27,29 @@ export async function fetchAllDishes(): Promise<Dish[]> {
 
   return dishes;
 }
+
+export interface FilterOptions {
+  type: string[];
+  occasion: string[];
+  region: string[];
+  flavor_profile: string[];
+}
+
+/**
+ * Extract unique, sorted filter values from a dish list.
+ * Runs at build time alongside fetchAllDishes.
+ */
+export function extractFilterOptions(dishes: Dish[]): FilterOptions {
+  const collect = (getter: (d: Dish) => string[]) => {
+    const set = new Set<string>();
+    for (const d of dishes) for (const v of getter(d)) if (v) set.add(v);
+    return Array.from(set).sort();
+  };
+
+  return {
+    type: collect((d) => d.type),
+    occasion: collect((d) => d.occasion),
+    region: collect((d) => (d.origin_region ? [d.origin_region] : [])),
+    flavor_profile: collect((d) => d.flavor_profile),
+  };
+}

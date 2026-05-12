@@ -1,10 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import SearchBar from '../components/SearchBar.astro';
+import FilterSidebar from '../components/FilterSidebar.astro';
 import DishCard from '../components/DishCard.astro';
-import { fetchAllDishes } from '../lib/api';
+import { fetchAllDishes, extractFilterOptions } from '../lib/api';
 
 const dishes = await fetchAllDishes();
+const filterOptions = extractFilterOptions(dishes);
 ---
 <Layout title="Filipino Food API — Showcase">
 	<div class="mb-6">
@@ -26,15 +28,34 @@ const dishes = await fetchAllDishes();
 
 	<SearchBar />
 
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-		{dishes.map((dish) => <DishCard dish={dish} />)}
+	<div class="flex items-center justify-between lg:hidden">
+		<button
+			id="filter-open"
+			type="button"
+			class="mb-4 inline-flex items-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M3 6h18M6 12h12M10 18h4" />
+			</svg>
+			Filters
+		</button>
 	</div>
 
-	<div
-		id="empty-state"
-		class="mt-12 hidden text-center text-neutral-500 dark:text-neutral-400"
-	>
-		<p class="text-lg">No dishes match your search.</p>
-		<p class="mt-1 text-sm">Try a different keyword.</p>
+	<div class="flex flex-col gap-6 lg:flex-row">
+		<FilterSidebar options={filterOptions} />
+
+		<div class="min-w-0 flex-1">
+			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+				{dishes.map((dish) => <DishCard dish={dish} />)}
+			</div>
+
+			<div
+				id="empty-state"
+				class="mt-12 hidden text-center text-neutral-500 dark:text-neutral-400"
+			>
+				<p class="text-lg">No dishes match your filters.</p>
+				<p class="mt-1 text-sm">Try clearing some filters or adjusting your search.</p>
+			</div>
+		</div>
 	</div>
 </Layout>

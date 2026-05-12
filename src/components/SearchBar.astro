@@ -43,52 +43,99 @@ const { resultCountId = 'result-count' } = Astro.props;
 </div>
 
 <script>
+	type FilterState = Record<string, Set<string>>;
+
 	const input = document.getElementById('search-input') as HTMLInputElement | null;
 	const clearBtn = document.getElementById('search-clear') as HTMLButtonElement | null;
 	const countEl = document.getElementById('result-count');
 	const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-dish-card]'));
 	const emptyState = document.getElementById('empty-state');
+	const filterCheckboxes = Array.from(
+		document.querySelectorAll<HTMLInputElement>('input[data-filter-group]')
+	);
+	const clearAllBtn = document.getElementById('filter-clear-all');
 
-	if (input && cards.length) {
+	if (cards.length) {
 		const total = cards.length;
 		let debounceTimer: number;
 
-		const matches = (haystack: string, needle: string) =>
-			haystack.toLowerCase().includes(needle.toLowerCase());
+		const getFilters = (): FilterState => {
+			const state: FilterState = {};
+			for (const cb of filterCheckboxes) {
+				if (!cb.checked) continue;
+				const group = cb.dataset.filterGroup!;
+				const value = cb.dataset.filterValue!;
+				if (!state[group]) state[group] = new Set();
+				state[group].add(value);
+			}
+			return state;
+		};
 
-		const applyFilter = (query: string) => {
-			const q = query.trim();
+		const cardMatchesFilters = (card: HTMLElement, filters: FilterState): boolean => {
+			// AND across groups, OR within a group.
+			for (const [group, values] of Object.entries(filters)) {
+				const cardValues = (card.dataset[`group${capitalize(group)}`] ?? '').split('|');
+				const hasMatch = [...values].some((v) => cardValues.includes(v));
+				if (!hasMatch) return false;
+			}
+			return true;
+		};
+
+		const matchesQuery = (card: HTMLElement, query: string) => {
+			if (query === '') return true;
+			return (card.dataset.search ?? '').toLowerCase().includes(query.toLowerCase());
+		};
+
+		const apply = () => {
+			const query = input?.value.trim() ?? '';
+			const filters = getFilters();
+			const hasFilters = Object.keys(filters).length > 0;
 			let visible = 0;
 
 			for (const card of cards) {
-				const haystack = card.dataset.search ?? '';
-				const show = q === '' || matches(haystack, q);
+				const show = matchesQuery(card, query) && cardMatchesFilters(card, filters);
 				card.classList.toggle('hidden', !show);
 				if (show) visible++;
 			}
 
 			if (countEl) {
-				countEl.textContent = q === ''
-					? `${total} dishes`
-					: `${visible} of ${total} ${visible === 1 ? 'dish' : 'dishes'}`;
+				const isFiltered = query !== '' || hasFilters;
+				countEl.textContent = isFiltered
+					? `${visible} of ${total} ${visible === 1 ? 'dish' : 'dishes'}`
+					: `${total} dishes`;
 			}
 
-			if (emptyState) emptyState.classList.toggle('hidden', visible > 0);
-			if (clearBtn) clearBtn.classList.toggle('hidden', q === '');
+			emptyState?.classList.toggle('hidden', visible > 0);
+			clearBtn?.classList.toggle('hidden', query === '');
+			clearAllBtn?.classList.toggle('hidden', !hasFilters);
 		};
 
-		input.addEventListener('input', () => {
+		input?.addEventListener('input', () => {
 			window.clearTimeout(debounceTimer);
-			debounceTimer = window.setTimeout(() => applyFilter(input.value), 150);
+			debounceTimer = window.setTimeout(apply, 150);
 		});
 
 		clearBtn?.addEventListener('click', () => {
-			input.value = '';
-			applyFilter('');
-			input.focus();
+			if (input) {
+				input.value = '';
+				input.focus();
+			}
+			apply();
 		});
 
-		// Initial count
-		applyFilter('');
+		for (const cb of filterCheckboxes) {
+			cb.addEventListener('change', apply);
+		}
+
+		clearAllBtn?.addEventListener('click', () => {
+			for (const cb of filterCheckboxes) cb.checked = false;
+			apply();
+		});
+
+		apply();
+	}
+
+	function capitalize(s: string) {
+		return s.charAt(0).toUpperCase() + s.slice(1);
 	}
 </script>
