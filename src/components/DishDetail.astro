@@ -63,6 +63,23 @@
 	</div>
 </aside>
 
+<button
+	id="dish-next"
+	type="button"
+	class="fixed bottom-6 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full bg-neutral-900 px-5 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
+	aria-label="Show another random dish"
+>
+	<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<rect x="3" y="3" width="18" height="18" rx="2" />
+		<circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none" />
+		<circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+		<circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" stroke="none" />
+		<circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" stroke="none" />
+		<circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" />
+	</svg>
+	<span>Next dish</span>
+</button>
+
 <!-- Embedded dish data for the detail script (populated by index.astro via <slot/>) -->
 <slot />
 
@@ -94,6 +111,7 @@
 	const metaEl = document.getElementById('dish-meta');
 	const creditEl = document.getElementById('dish-credit');
 	const cards = document.querySelectorAll<HTMLElement>('[data-dish-card]');
+    const nextBtn = document.getElementById('dish-next');
 
 	if (panel && dataEl) {
 		const dishes: Dish[] = JSON.parse(dataEl.textContent ?? '[]');
@@ -150,6 +168,8 @@
 			render(dish);
 			panel.classList.remove('hidden');
 			backdrop?.classList.remove('hidden');
+            nextBtn?.classList.remove('hidden');
+            nextBtn?.classList.add('inline-flex');
 			document.body.classList.add('overflow-hidden');
 			requestAnimationFrame(() => closeBtn?.focus());
 
@@ -163,6 +183,8 @@
 		const close = (options: { updateUrl?: boolean } = { updateUrl: true }) => {
 			panel.classList.add('hidden');
 			backdrop?.classList.add('hidden');
+            nextBtn?.classList.add('hidden');
+            nextBtn?.classList.remove('inline-flex');
 			document.body.classList.remove('overflow-hidden');
 			currentDish = null;
 			lastFocused?.focus();
@@ -241,6 +263,15 @@
 			}
 			close({ updateUrl: false });
 		});
+
+        nextBtn?.addEventListener('click', () => {
+            if (dishes.length < 2) return;
+            let pick;
+            do {
+                pick = dishes[Math.floor(Math.random() * dishes.length)];
+            } while (pick.id === currentDish?.id);
+            open(pick);
+        });
 
 		// Open panel on initial load if URL has ?dish=...
 		const initialId = new URL(window.location.href).searchParams.get('dish');
