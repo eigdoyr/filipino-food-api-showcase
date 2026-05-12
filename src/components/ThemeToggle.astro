@@ -1,0 +1,68 @@
+<button
+	id="theme-toggle"
+	type="button"
+	class="inline-flex h-8 w-8 items-center justify-center rounded-md text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+	aria-label="Toggle theme"
+	title="Toggle theme"
+>
+	<svg data-icon="light" class="h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+	</svg>
+	<svg data-icon="dark" class="h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+	</svg>
+	<svg data-icon="system" class="h-4 w-4 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+		<rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+	</svg>
+</button>
+
+<script>
+	type Theme = 'light' | 'dark' | 'system';
+
+	const button = document.getElementById('theme-toggle');
+	if (button) {
+		const icons = {
+			light: button.querySelector<SVGElement>('[data-icon="light"]'),
+			dark: button.querySelector<SVGElement>('[data-icon="dark"]'),
+			system: button.querySelector<SVGElement>('[data-icon="system"]'),
+		};
+
+		const getTheme = (): Theme => {
+			const stored = localStorage.getItem('theme');
+			if (stored === 'light' || stored === 'dark') return stored;
+			return 'system';
+		};
+
+		const applyTheme = (theme: Theme) => {
+			const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isDark = theme === 'dark' || (theme === 'system' && systemDark);
+			document.documentElement.classList.toggle('dark', isDark);
+
+			Object.values(icons).forEach((el) => el?.classList.add('hidden'));
+			icons[theme]?.classList.remove('hidden');
+		};
+
+		const setTheme = (theme: Theme) => {
+			if (theme === 'system') {
+				localStorage.removeItem('theme');
+			} else {
+				localStorage.setItem('theme', theme);
+			}
+			applyTheme(theme);
+		};
+
+		const cycle: Record<Theme, Theme> = {
+			light: 'dark',
+			dark: 'system',
+			system: 'light',
+		};
+
+		applyTheme(getTheme());
+		button.addEventListener('click', () => setTheme(cycle[getTheme()]));
+
+		// React to OS theme changes when in system mode
+		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+			if (getTheme() === 'system') applyTheme('system');
+		});
+	}
+</script>
