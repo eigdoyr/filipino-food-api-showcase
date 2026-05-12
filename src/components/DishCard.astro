@@ -7,7 +7,22 @@ interface Props {
 
 const { dish } = Astro.props;
 ---
-<article class="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700">
+<article
+	data-dish-card
+	data-search={[
+		dish.name,
+		dish.description,
+		dish.id,
+		...dish.type,
+		...dish.main_ingredients,
+		...dish.occasion,
+		...dish.flavor_profile,
+		...dish.cooking_method,
+		...dish.tags,
+		dish.origin_region ?? '',
+	].join(' ')}
+	class="group overflow-hidden rounded-xl border border-neutral-200 bg-white transition hover:border-neutral-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+>
 	<div class="aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
 		<img
 			src={dish.image_url}
