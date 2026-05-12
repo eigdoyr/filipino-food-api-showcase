@@ -57,6 +57,39 @@ const { resultCountId = 'result-count' } = Astro.props;
 
 	if (cards.length) {
 		const total = cards.length;
+const FILTER_GROUPS = ['type', 'occasion', 'region', 'flavor_profile'] as const;
+
+const readUrlState = () => {
+	const url = new URL(window.location.href);
+	const q = url.searchParams.get('q') ?? '';
+	const filters: Record<string, Set<string>> = {};
+	for (const group of FILTER_GROUPS) {
+		const raw = url.searchParams.get(group);
+		if (raw) filters[group] = new Set(raw.split(',').filter(Boolean));
+	}
+	return { q, filters };
+};
+
+const writeUrlState = () => {
+	const url = new URL(window.location.href);
+	const q = input?.value.trim() ?? '';
+	const filters = getFilters();
+
+	if (q) url.searchParams.set('q', q);
+	else url.searchParams.delete('q');
+
+	for (const group of FILTER_GROUPS) {
+		const values = filters[group];
+		if (values && values.size > 0) {
+			url.searchParams.set(group, Array.from(values).join(','));
+		} else {
+			url.searchParams.delete(group);
+		}
+	}
+
+	history.replaceState(history.state, '', url);
+};
+
 		let debounceTimer: number;
 
 		const getFilters = (): FilterState => {
@@ -108,6 +141,8 @@ const { resultCountId = 'result-count' } = Astro.props;
 			emptyState?.classList.toggle('hidden', visible > 0);
 			clearBtn?.classList.toggle('hidden', query === '');
 			clearAllBtn?.classList.toggle('hidden', !hasFilters);
+
+            writeUrlState();
 		};
 
 		input?.addEventListener('input', () => {
@@ -132,7 +167,19 @@ const { resultCountId = 'result-count' } = Astro.props;
 			apply();
 		});
 
-		apply();
+		// Hydrate state from URL on initial load
+        const { q: initialQuery, filters: initialFilters } = readUrlState();
+        if (input && initialQuery) input.value = initialQuery;
+        for (const cb of filterCheckboxes) {
+        const group = cb.dataset.filterGroup;
+        const value = cb.dataset.filterValue;
+        if (group && value && initialFilters[group]?.has(value)) {
+            cb.checked = true;
+        }
+    }
+
+    apply();
+    
 	}
 
 	function capitalize(s: string) {
