@@ -1,6 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import DishCard from '../components/DishCard.astro';
+import { fetchAllDishes } from '../lib/api';
+
+const dishes = await fetchAllDishes();
 ---
 <Layout title="Filipino Food API — Showcase">
-	<h1>Astro</h1>
+	<div class="mb-8">
+		<h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+			Filipino Food
+		</h1>
+		<p class="mt-2 text-neutral-600 dark:text-neutral-400">
+			A showcase of {dishes.length} dishes served via the
+			
+				<a href="https://filipino-food-api.ryodgie.workers.dev/v1"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="font-medium text-neutral-900 underline-offset-2 hover:underline dark:text-neutral-100"
+			>
+				Filipino Food API
+			</a>.
+		</p>
+	</div>
+
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+		{dishes.map((dish) => <DishCard dish={dish} />)}
+	</div>
 </Layout>
