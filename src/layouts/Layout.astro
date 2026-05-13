@@ -7,34 +7,74 @@ import Footer from '../components/Footer.astro';
 interface Props {
 	title?: string;
 	description?: string;
+	image?: string;
+	noindex?: boolean;
 }
 
+const SITE_URL = 'https://filipino-food-api-showcase.ryodgie.workers.dev';
+const SITE_NAME = 'Filipino Food API';
+const DEFAULT_IMAGE = 'https://pub-2e1172f9672f425f9d4a549a832fbd21.r2.dev/dishes/adobo.jpg';
+
 const {
-	title = 'Filipino Food API',
-	description = 'A showcase of 100 Filipino dishes served via a free, open API.',
+	title = 'Filipino Food API — Showcase',
+	description = 'A showcase of 100 Filipino dishes served via a free, open API. Browse, search, and filter by region, occasion, and flavor.',
+	image = DEFAULT_IMAGE,
+	noindex = false,
 } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE_URL).toString();
 ---
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description} />
-		<Font cssVariable="--font-dm-sans" preload />
-        <script is:inline>
-	(() => {
-		const stored = localStorage.getItem('theme');
-		const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		const isDark = stored === 'dark' || (stored !== 'light' && systemDark);
-		document.documentElement.classList.toggle('dark', isDark);
-	})();
-</script>
+
+		<!-- Primary -->
 		<title>{title}</title>
+		<meta name="description" content={description} />
+		<meta name="author" content="Ryodgie Barnatia" />
+		<link rel="canonical" href={canonical} />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+		<!-- Icons -->
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+
+		<!-- Theme color -->
+		<meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={SITE_NAME} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={image} />
+		<meta property="og:image:alt" content="Adobo, the unofficial national dish of the Philippines" />
+		<meta property="og:locale" content="en_US" />
+
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={image} />
+
+		<!-- No-flash theme script -->
+		<script is:inline>
+			(() => {
+				const stored = localStorage.getItem('theme');
+				const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				const isDark = stored === 'dark' || (stored !== 'light' && systemDark);
+				document.documentElement.classList.toggle('dark', isDark);
+			})();
+		</script>
+
+		<Font cssVariable="--font-dm-sans" preload />
 	</head>
-	<body class="flex min-h-screen flex-col bg-neutral-50 font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+	<body class="flex min-h-screen flex-col bg-neutral-50 pb-20 font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
 		<Header />
 		<main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
 			<slot />
