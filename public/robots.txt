@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://filipino-food-api-showcase.ryodgie.workers.dev/sitemap-index.xml
