@@ -1,43 +1,71 @@
-# Astro Starter Kit: Minimal
+# Filipino Food API Showcase 🍚
 
-```sh
-npm create astro@latest -- --template minimal
+A static showcase site for the [Filipino Food API](https://github.com/eigdoyr/filipino-food-api) — 100 Filipino dishes you can browse, search, and filter.
+
+## Preview
+
+![Filipino Food API Showcase Preview](/public/preview.png)
+
+## Live Demo
+
+[filipino-food-api-showcase.ryodgie.workers.dev](https://filipino-food-api-showcase.ryodgie.workers.dev)
+
+## Built With
+
+- Astro
+- TypeScript
+- Tailwind CSS v4
+- Vanilla JS for interactivity (no client framework)
+- Cloudflare Workers (static assets)
+
+## Features
+
+- 100 dishes fetched at build time and rendered as static HTML
+- Debounced client-side search across names, ingredients, regions, and tags
+- Multi-select filters by type, occasion, region, and flavor (AND across groups, OR within)
+- Detail modal with full schema, image credit, and Copy as JSON button
+- Shareable URLs — search, filters, and open dish all sync to the query string
+- Random dish navigation inside the modal + grid shuffle in the search bar
+- Light, dark, and system theme toggle with no flash on load
+- Fully responsive — drawer filters on mobile, inline sidebar on desktop
+- Self-hosted DM Sans via Astro's Fonts API
+- SEO meta tags, canonical URLs, Open Graph, Twitter cards, sitemap, robots.txt
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Build
 
-## 🚀 Project Structure
+```bash
+npm run build
+```
 
-Inside of your Astro project, you'll see the following folders and files:
+## Project Structure
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+src/
+├── components/ # DishCard, DishDetail, FilterSidebar, Header, Footer, SearchBar, ThemeToggle
+├── layouts/ # Layout.astro — base shell, SEO tags, dark-mode init
+├── lib/ # api.ts (build-time fetch), types.ts
+├── pages/ # index.astro — the single page
+└── styles/ # global.css — Tailwind import, dark variant, font theme
+public/ # robots.txt, preview.png, favicons
+astro.config.mjs # Tailwind plugin, DM Sans, sitemap, site URL
+wrangler.jsonc # Cloudflare deploy config
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## API
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+This site is powered by the [Filipino Food API](https://github.com/eigdoyr/filipino-food-api).
 
-Any static assets, like images, can be placed in the `public/` directory.
+- API: [filipino-food-api.ryodgie.workers.dev/v1](https://filipino-food-api.ryodgie.workers.dev/v1)
+- Docs: [ryodgie.mintlify.app/introduction](https://ryodgie.mintlify.app/introduction)
+- Swagger: [filipino-food-api.ryodgie.workers.dev/docs](https://filipino-food-api.ryodgie.workers.dev/docs)
 
-## 🧞 Commands
+## Design
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Designed & Built by [Ryodgie Barnatia](https://www.ryodgie.com)
